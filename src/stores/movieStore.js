@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import axios from 'axios';
 
 export const useMovieStore = defineStore('movie', () => {
@@ -8,6 +8,11 @@ export const useMovieStore = defineStore('movie', () => {
   const isLoading = ref(false);
   const errorMessage = ref('');
   const selectedMovie = ref(null);
+  const searchKeyword = ref('');
+  const sortType = ref('popularity');
+  const currentPage = ref(1);
+  const itemsPerPage = ref(6);
+
 
   const fetchMovies = async () => {
     isLoading.value = true;
@@ -72,7 +77,60 @@ export const useMovieStore = defineStore('movie', () => {
     }finally {
       isLoading.value = false;
     }
+  };
+
+  const filteredMovies = computed(() => {
+  let result = movies.value;
+
+  if (searchKeyword.value.trim() !== '') {
+    result = result.filter(movie =>
+      movie.title.toLowerCase().includes(searchKeyword.value.trim().toLowerCase())
+    );
   }
+
+  result = [...result].sort((a, b) => {
+    if (sortType.value === 'title') {
+      return a.title.localeCompare(b.title);
+    }
+
+    if (sortType.value === 'release_date') {
+      return new Date(b.release_date) - new Date(a.release_date);
+    }
+
+    if (sortType.value === 'rating') {
+      return b.vote_average - a.vote_average;
+    }
+
+    return b.popularity - a.popularity;
+  });
+
+  return result;
+});
+
+  const totalPages = computed(() => {
+    return Math.ceil(filteredMovies.value.length / itemsPerPage.value);
+  });
+
+  const paginatedMovies = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage.value;
+    const end = start + itemsPerPage.value;
+
+    return filteredMovies.value.slice(start, end);
+  });
+
+  const setSearchKeyword = (keyword) => {
+    searchKeyword.value = keyword;
+    currentPage.value = 1;
+  };
+
+  const setSortType = (type) => {
+    sortType.value = type;
+    currentPage.value = 1;
+  };
+
+  const setPage = (page) => {
+    currentPage.value = page;
+  };
 
   const toggleFavorite = (movieId) => {
     const movie = movies.value.find(m => m.id === movieId);
@@ -97,6 +155,16 @@ export const useMovieStore = defineStore('movie', () => {
     toggleFavorite,
     selectedMovie,
     fetchMovieDetail,
+    searchKeyword,
+    sortType,
+    currentPage,
+    itemsPerPage,
+    filteredMovies,
+    paginatedMovies,
+    totalPages,
+    setSearchKeyword,
+    setSortType,
+    setPage,
   };
   
 });
