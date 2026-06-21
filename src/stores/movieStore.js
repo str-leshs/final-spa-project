@@ -59,7 +59,7 @@ export const useMovieStore = defineStore('movie', () => {
 
     try{
       const API_KEY = '82f60caa707dcf958839d621bcbab16d';
-      const url = `https://api.themoviedb.org/3/movie/${movieId}`;;
+      const url = `https://api.themoviedb.org/3/movie/${movieId}`;
 
       const response = await axios.get(url, {
         params : {
